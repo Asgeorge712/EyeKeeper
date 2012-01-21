@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/resetNumber"
+        android:title="@string/resetNum"/>
+    <item
+        android:id="@+id/tracking"
+        android:checkable="true"
+        android:checked="false"
+        android:icon="@drawable/tracking"
+        android:title="@string/tracking"
+        android:visible="true"/>
+    <item
+        android:id="@+id/ping"
+        android:icon="@drawable/ping"
+        android:title="@string/ping"/>
+    <item
+        android:id="@+id/quick_msg"
+        android:icon="@drawable/message"
+        android:title="@string/quick_msg">
+
+        <!-- "file" submenu -->
+        <menu>
+            <item
+                android:id="@+id/where_r_u"
+                android:title="@string/where_r_u"/>
+            <item
+                android:id="@+id/come_home"
+                android:title="@string/come_home"/>
+            <item
+                android:id="@+id/dinner"
+                android:title="@string/dinner"/>
+            <item
+                android:id="@+id/call_me"
+                android:title="@string/call_me"/>
+        </menu>
+    </item>
+    <item
+        android:id="@+id/help"
+        android:icon="@drawable/help"
+        android:title="@string/help"/>
+
+</menu>

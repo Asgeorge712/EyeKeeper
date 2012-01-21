@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="hello">Hello! Welcome to the EyeKeeper App!</string>
+    <string name="app_name">EyeKeeper</string>
+    <string name="track_btn">Track</string>
+    <string name="resetNum">Reset Client Number</string>
+    <string name="tracking">Tracking</string>
+    <string name="ping">Ping Client</string>
+    <string name="quick_msg">Quick Message!</string>
+    <string name="where_r_u">Where are you going?</string>
+    <string name="help">Help</string>
+    <string name="stop_code">stop_tracking</string>
+    <string name="start_code">start_tracking</string>
+    <string name="service_name">EyeKeeper Service</string>
+    <string name="ping_code">ping</string>
+    <string name="where_r_u_going">Where are you going??</string>
+    <string name="come_home">Come home now please.</string>
+    <string name="dinner">Dinner is ready!</string>
+    <string name="call_me">Call me right now please.</string>
+    <string name="mapskey">ABQIAAAAM1lmbF8bztTW6dgjgOVQLBTGusFLTbPB0cpi870SuUUaBEE1RhRhlqqqdakhI9HQXwVIjoYXu2ZrFg</string>
+
+</resources>
