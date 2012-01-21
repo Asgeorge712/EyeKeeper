@@ -1,3 +1,8 @@
+/*****************************************
+ * 
+ * @author Paul George  
+ * 
+ *****************************************/
 package com.paulgeorge.ek;
 
 import java.util.Date;
