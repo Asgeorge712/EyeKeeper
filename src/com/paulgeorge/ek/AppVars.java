@@ -13,6 +13,7 @@ public class AppVars {
 	private String serverPhone;
 	private String clientNumberDefault = "7033808765";
 	private Date serverStartDate;
+	private long trackingInterval = 10;
 	
 	protected AppVars() {
 		
@@ -62,6 +63,14 @@ public class AppVars {
 
 	public void setServerStartDate( Date serverStartDate ) {
 		this.serverStartDate = serverStartDate;
+	}
+
+	public long getTrackingInterval() {
+		return trackingInterval;
+	}
+
+	public void setTrackingInterval( long trackingInterval ) {
+		this.trackingInterval = trackingInterval;
 	}
 	
 }

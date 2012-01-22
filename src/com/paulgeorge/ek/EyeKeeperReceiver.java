@@ -64,6 +64,8 @@ public class EyeKeeperReceiver extends BroadcastReceiver {
 						Log.i("EyeKeeperReceiver","Got a Service message.");
 						//Stop any other BroadcastReceivers from seeing this message:
 						this.abortBroadcast();
+						
+						//Tell service singleton to process message
 						EyeKeeperService.getInstance( context ).processMessage(body);
 					}
 				}

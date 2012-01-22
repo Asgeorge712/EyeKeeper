@@ -3,24 +3,16 @@ package com.paulgeorge.ek;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.Bundle;
-import android.os.IBinder;
 import android.telephony.SmsManager;
 import android.util.Log;
-import android.widget.Toast;
 
 /*******************************************************************
  * 
@@ -95,12 +87,14 @@ public class EyeKeeperService {
 		HashMap<String, String> params = new HashMap<String, String>();
 
 		// Skip the preamble
-		if ( tok.hasMoreTokens() ) tok.nextToken();
-		
-		//Grab the next token, which should be command.
-		if ( tok.hasMoreTokens() ) command = (String) tok.nextToken();
-		
-		//Convert Command to an int
+		if ( tok.hasMoreTokens() )
+			tok.nextToken();
+
+		// Grab the next token, which should be command.
+		if ( tok.hasMoreTokens() )
+			command = (String) tok.nextToken();
+
+		// Convert Command to an int
 		try {
 			command_int = Integer.parseInt(command);
 		}
@@ -142,8 +136,13 @@ public class EyeKeeperService {
 				sendPingReplyToServer();
 				break;
 			case START_TRACKING:
+				Log.i("Service", "Received request to start tracking thread.");
 				if ( !timerRunning ) { // Start Timer
+					Log.i("Service", "Timer is not running, so yay, kick off thread");
 					startTimer(params);
+				}
+				else {
+					Log.i("Service", "Timer thread already running, maybe");
 				}
 				break;
 			case STOP_TRACKING:
@@ -211,6 +210,7 @@ public class EyeKeeperService {
 		String lng = "" + loc.getLongitude();
 
 		String message = EyeKeeperActivity.MESSAGE_PREAMBLE + " " + Command.LOCATION.value() + " " + lat + " " + lng;
+		Log.i("SERVICE","Sending message to server: " + message );
 		sendServerSMS(message);
 	}
 
@@ -255,12 +255,17 @@ public class EyeKeeperService {
     *
     ******************************************************/
 	public void startTimer( HashMap<String, String> params ) {
+		if ( timer != null ) {
+			timer.cancel();
+			timer = null;
+		}
 		timer = new Timer("EyeKeeperService");
 		String timerIntervalString = (String) params.get("INTERVAL");
 		int interval = 0;
 
 		try {
 			interval = Integer.parseInt(timerIntervalString);
+			Log.i("Service", "Timer interval set at: " + interval + " Seconds.");
 		}
 		catch (Exception e) {
 			Log.e("EyeKeeperService", "Start Timer: Could not parse INTERVAL parameter" + timerIntervalString + "! Timer not started!!");
