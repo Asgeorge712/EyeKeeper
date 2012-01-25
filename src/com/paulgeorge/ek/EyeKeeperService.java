@@ -26,6 +26,11 @@ public class EyeKeeperService {
 	private Context ctx;
 	private boolean timerRunning = false;
 
+	private LocationManager locationManager;
+	private MyLocationListener locListener;
+	private Location currentLocation;
+	private boolean listeningForLocationUpdates = false;
+
 	private static EyeKeeperService instance;
 
 	/*******************************************************
@@ -37,7 +42,8 @@ public class EyeKeeperService {
 		public void run() {
 			// Calculate Location and send text message to server number
 			Log.i("EyeKeeperService", "Timer kicking off.. looking for location...");
-			sendCurrentLocationToServer();
+			setCurrentLocation(locListener.getBestCurrentLocation());
+			sendCurrentLocationToServer(getCurrentLocation());
 			Log.i("EyeKeeperService", "Timer task sent current location to: " + AppVars.getInstance().getServerPhone());
 		}
 	};
@@ -66,47 +72,80 @@ public class EyeKeeperService {
 
 
 	/*****************************************************
-	 * Service has received a BroadcastIntent from EyeKeeperReceiver
 	 * 
-	 ******************************************************/
-	public void processMessage( String msg ) {
-		AppVars vars = AppVars.getInstance();
-		Log.i("EyeKeeperService", "Processing Message, body is: " + msg);
+	 * 
+	 *****************************************************/
+	private void initLocationManager() {
+		// Define a listener that responds to location updates
+		if ( !listeningForLocationUpdates ) {
+			locListener = new MyLocationListener();
 
-		// A message will have:
-		// A preamble,
-		// A command, and
-		// Zero or more command parameters
-		StringTokenizer tok = new StringTokenizer(msg, " ");
+			// Register the listener with the Location Manager to receive
+			// location updates
+			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locListener);
+			listeningForLocationUpdates = true;
+		}
+	}
 
-		String command = "";
-		int command_int = -1;
+
+	/*****************************************************
+	 * 
+	 *
+	 *****************************************************/
+	private void destroyLocationManager() {
+		// Remove the listener you previously added
+		if ( listeningForLocationUpdates ) {
+			locationManager.removeUpdates(locListener);
+			locListener = null;
+			listeningForLocationUpdates = false;
+		}
+		else {
+			Log.e("EyeKeeperService", "Request to destroy Location Manager when none is set up.");
+		}
+
+	}
+
+
+	/************************************************
+	 * 
+	 * @param msg
+	 * @return
+	 ************************************************/
+	private String extractCommand( String msg ) {
+		if ( msg == null || msg.length() == 0 )
+			return null;
+		int firstSpace = msg.indexOf(" ");
+		if ( firstSpace <= 0 )
+			return null;
+		String cmd = msg.substring(firstSpace, firstSpace + 1);
+		if ( cmd == null || cmd.length() == 0 )
+			return null;
+		return cmd;
+	}
+
+
+	/**********************************************************
+	 * 
+	 * 
+	 * @param msg
+	 * @return
+	 *****************************************************/
+	private HashMap<String, String> getParams( String msg ) {
+		HashMap<String, String> params = new HashMap<String, String>();
 
 		ArrayList<String> nameValues = new ArrayList<String>();
-
-		HashMap<String, String> params = new HashMap<String, String>();
+		StringTokenizer tok = new StringTokenizer(msg, " ");
 
 		// Skip the preamble
 		if ( tok.hasMoreTokens() )
 			tok.nextToken();
 
-		// Grab the next token, which should be command.
+		// Skip the command.
 		if ( tok.hasMoreTokens() )
-			command = (String) tok.nextToken();
-
-		// Convert Command to an int
-		try {
-			command_int = Integer.parseInt(command);
-		}
-		catch (Exception e) {
-			Log.e("EyeKeeperService", "Command: " + command + " could not be turned into an int.");
-		}
-
-		Log.i("EyeKeeperService", "Command Received: " + command);
+			tok.nextToken();
 
 		while (tok.hasMoreTokens()) {
 			String nextToken = (String) tok.nextToken();
-			Log.i("EyeKeeperService", "Found another token in message:" + nextToken);
 			nameValues.add(nextToken);
 		}
 
@@ -115,47 +154,89 @@ public class EyeKeeperService {
 			params = parseNameValues(nameValues);
 		}
 
+		return params;
+	}
+
+
+	/*****************************************************
+	 * Service has received a BroadcastIntent from EyeKeeperReceiver
+	 * 
+	 ******************************************************/
+	public void processMessage( String msg ) {
+		AppVars vars = AppVars.getInstance();
+		Log.i("EyeKeeperService", "Processing Message, body is: " + msg);
+
+		// A message will have: A preamble, A command, and Zero or more command parameters
+		String command = extractCommand(msg);
+		
+		// Look at the command and decide what to do....
+		if ( command == null || command.length() == 0 ) {
+			Log.e("EyeKeeperService", "No Command was in the text message!");
+			return;
+		}
+
+		// Convert Command to an int
+		int command_int;
+		try {
+			command_int = Integer.parseInt(command);
+		}
+		catch (Exception e) {
+			Log.e("EyeKeeperService", "Command: " + command + " could not be turned into an int.");
+			command_int = -1;
+		}
+
+		HashMap<String, String> params = getParams(msg);
+
+		// ************************************
 		if ( params.containsKey("REPLY") ) {
 			Log.i("EyeKeeperServer", "Using params to set Server reply Phone number.");
 			vars.setServerPhone(params.get("REPLY"));
 		}
 
-		// Look at the command and decide what to do....
-		if ( command.equals("") ) {
-			Log.e("EyeKeeperService", "No Command was in the text message!");
-			return;
-		}
-		else if ( !vars.validServerPhone() ) {
+		// ***********************************************
+		if ( !vars.validServerPhone() ) {
 			Log.e("EyeKeeperService", "Server Ph Num is blank! Initialization ERROR!!");
 			return;
 		}
+
+		// ***********************************************
 		Command cmd = Command.lookup(command_int);
 
 		switch (cmd) {
 			case PING:
 				sendPingReplyToServer();
 				break;
+
 			case START_TRACKING:
 				Log.i("Service", "Received request to start tracking thread.");
 				if ( !timerRunning ) { // Start Timer
 					Log.i("Service", "Timer is not running, so yay, kick off thread");
+					initLocationManager();
 					startTimer(params);
 				}
 				else {
-					Log.i("Service", "Timer thread already running, maybe");
+					Log.i("Service", "Received request to start the Timer thread, but it seems to be already running.");
 				}
 				break;
+
 			case STOP_TRACKING:
 				if ( timerRunning ) { // Stop Timer
 					stopTimer("Stop Request");
+					destroyLocationManager();
+				}
+				else {
+					Log.w("EyeKeeperService", "Received request to stop location timer, but it doesn't appear to be running.");
 				}
 				break;
+
 			case GET_UPTIME:
 				sendUptimeReplyToServer();
 				break;
+
 			case GET_STARTTIME:
 				sendStarttimeReplyToServer();
 				break;
+
 			default:
 				Log.e("EyeKeeperService", "UNKNOWN COMMAND: " + msg);
 		}
@@ -204,13 +285,12 @@ public class EyeKeeperService {
     *
     *
     ******************************************************/
-	private void sendCurrentLocationToServer() {
-		Location loc = getCurrentLocation();
+	private void sendCurrentLocationToServer( Location loc ) {
 		String lat = "" + loc.getLatitude();
 		String lng = "" + loc.getLongitude();
 
 		String message = EyeKeeperActivity.MESSAGE_PREAMBLE + " " + Command.LOCATION.value() + " " + lat + " " + lng;
-		Log.i("SERVICE","Sending message to server: " + message );
+		Log.i("SERVICE", "Sending message to server: " + message);
 		sendServerSMS(message);
 	}
 
@@ -316,7 +396,6 @@ public class EyeKeeperService {
 
 		for (int i = 0; i < nameValues.size(); i++) {
 			String nameValue = (String) nameValues.get(i);
-			Log.i("Parser", "Parsing :" + nameValue);
 			String delims = "[:]";
 			String[] tokens = nameValue.split(delims);
 
@@ -328,6 +407,24 @@ public class EyeKeeperService {
 			}
 		}
 		return newParms;
+	}
+
+
+	/*****************************************************
+    *
+    *
+    ******************************************************/
+	public Location setCurrentLocation() {
+		return this.currentLocation;
+	}
+
+
+	/*****************************************************
+    *
+    *
+    ******************************************************/
+	public void setCurrentLocation( Location currentLocation ) {
+		this.currentLocation = currentLocation;
 	}
 
 }
