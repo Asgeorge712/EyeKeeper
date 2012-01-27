@@ -26,14 +26,16 @@ public final class R {
         public static final int call_me=0x7f06000b;
         public static final int come_home=0x7f060009;
         public static final int dinner=0x7f06000a;
-        public static final int help=0x7f06000c;
+        public static final int help=0x7f06000e;
         public static final int linearLayout1=0x7f060000;
         public static final int mapview=0x7f060001;
         public static final int messageArea=0x7f060003;
         public static final int ping=0x7f060006;
         public static final int quick_msg=0x7f060007;
         public static final int resetNumber=0x7f060004;
+        public static final int starttime=0x7f06000c;
         public static final int tracking=0x7f060005;
+        public static final int uptime=0x7f06000d;
         public static final int where_r_u=0x7f060008;
     }
     public static final class layout {
@@ -44,22 +46,24 @@ public final class R {
     }
     public static final class string {
         public static final int app_name=0x7f040001;
-        public static final int call_me=0x7f040010;
-        public static final int come_home=0x7f04000e;
-        public static final int dinner=0x7f04000f;
+        public static final int call_me=0x7f040012;
+        public static final int come_home=0x7f040010;
+        public static final int dinner=0x7f040011;
         public static final int hello=0x7f040000;
         public static final int help=0x7f040008;
-        public static final int mapskey=0x7f040011;
+        public static final int mapskey=0x7f040013;
         public static final int ping=0x7f040005;
-        public static final int ping_code=0x7f04000c;
+        public static final int ping_code=0x7f04000e;
         public static final int quick_msg=0x7f040006;
         public static final int resetNum=0x7f040003;
-        public static final int service_name=0x7f04000b;
-        public static final int start_code=0x7f04000a;
-        public static final int stop_code=0x7f040009;
+        public static final int service_name=0x7f04000d;
+        public static final int start_code=0x7f04000c;
+        public static final int starttime=0x7f040009;
+        public static final int stop_code=0x7f04000b;
         public static final int track_btn=0x7f040002;
         public static final int tracking=0x7f040004;
+        public static final int uptime=0x7f04000a;
         public static final int where_r_u=0x7f040007;
-        public static final int where_r_u_going=0x7f04000d;
+        public static final int where_r_u_going=0x7f04000f;
     }
 }

@@ -37,6 +37,12 @@
         </menu>
     </item>
     <item
+        android:id="@+id/starttime"
+        android:title="@string/starttime"/>
+    <item
+        android:id="@+id/uptime"
+        android:title="@string/uptime"/>
+    <item
         android:id="@+id/help"
         android:icon="@drawable/help"
         android:title="@string/help"/>

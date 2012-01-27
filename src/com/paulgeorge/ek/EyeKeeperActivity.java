@@ -1,5 +1,6 @@
 package com.paulgeorge.ek;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -41,7 +42,7 @@ public class EyeKeeperActivity extends MapActivity {
 	private boolean pingActive = true;
 	private BroadcastReceiver receiver;
 	public static final String ACTIVITY_ACTION = "com.paulgeorge.ek.EyeKeeperActivity.ACTION";
-	public static final String MESSAGE_BODY = "com.paulgeorge.ek.EyeKeeperActivity.BODY";
+	public static final String MESSAGE_BODY    = "com.paulgeorge.ek.EyeKeeperActivity.BODY";
 
 	public static final String MESSAGE_PREAMBLE = "EyeKeeper-1.0.0.1: ";
 
@@ -49,7 +50,7 @@ public class EyeKeeperActivity extends MapActivity {
 
 	private MapView mapView;
 	private MapController mapController;
-	
+
 	TextView messagesSaved = null;
 
 
@@ -74,12 +75,12 @@ public class EyeKeeperActivity extends MapActivity {
 			Log.i("EyeKeeperActivity", "My phone number is: " + vars.getServerPhone());
 		}
 
-		Log.i("onCreate", "onCreate has started!!!!!!!!!!!");
+		Log.i("onCreate", "onCreate has started!");
 		receiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive( Context context, Intent intent ) {
 				Log.i("EyeKeeperActivity", "I received a new broadcast event!");
-				String body = intent.getExtras().getString(MESSAGE_BODY); // Intent.EXTRA_TEXT
+				String body = intent.getExtras().getString(MESSAGE_BODY);
 				Log.i("EyeKeeperActivity", "Body is: " + body);
 
 				if ( body != null ) {
@@ -89,7 +90,7 @@ public class EyeKeeperActivity extends MapActivity {
 		};
 
 		if ( vars.getClientPhone() == null ) {
-			Log.i("onCreate", "ClientNumber is NUUULLLL!!!!");
+			Log.i("onCreate", "ClientNumber is NULL!");
 			getClientPhoneNumber();
 		}
 
@@ -100,16 +101,14 @@ public class EyeKeeperActivity extends MapActivity {
 
 		/*
 		 * 
-		 * double lat = 38.737305; double lng = -77.560111; GeoPoint point = new
-		 * GeoPoint((int) (lat * 1E6), (int) (lng * 1E6));
-		 * setClientLocation(point, "Target Location!", "Not moving.");
+		 * double lat = 38.737305; double lng = -77.560111; GeoPoint point = new GeoPoint((int) (lat * 1E6), (int) (lng
+		 * * 1E6)); setClientLocation(point, "Target Location!", "Not moving.");
 		 */
 	}
 
 
 	/****************************************************
-	 * Valid Messages from Client 1 lat lng loc|lat|lng uptime|long
-	 * starttime|long
+	 * Valid Messages from Client 1 lat lng loc|lat|lng uptime|long starttime|long
 	 * 
 	 * 
 	 * 
@@ -170,17 +169,39 @@ public class EyeKeeperActivity extends MapActivity {
 					long diff = Long.parseLong(diffStr);
 					int hours = 0;
 					int minutes = 0;
-					int seconds = (int)diff/1000000;
+					int seconds = (int) diff / 1000;
+					String secs = seconds + "";
+					String hrs = "00";
+					String mins = "00";
+
 					if ( seconds > 59 ) {
 						minutes = seconds / 60;
 						seconds = seconds % 60;
 						if ( minutes > 59 ) {
-							hours = minutes/60;
-							minutes = minutes/60;
+							hours = minutes / 60;
 						}
-						String uptime = hours + ":" + minutes + ":" + seconds;
-						addToMessageArea("Client client has been running for: " + uptime );
 					}
+					secs = seconds + "";
+					mins = minutes + "";
+					hrs = hours + "";
+
+					if ( hrs.length() == 0 )
+						hrs = "00";
+					else if ( hrs.length() == 1 )
+						hrs = "0" + hrs;
+
+					if ( mins.length() == 0 )
+						mins = "00";
+					else if ( mins.length() == 1 )
+						mins = "0" + mins;
+
+					if ( secs.length() == 0 )
+						secs = "00";
+					else if ( secs.length() == 1 )
+						secs = "0" + secs;
+
+					String uptime = hrs + ":" + mins + ":" + secs;
+					addToMessageArea("Service has been running for " + uptime + " on Client.");
 				}
 				break;
 
@@ -188,14 +209,16 @@ public class EyeKeeperActivity extends MapActivity {
 				Log.i("EyeKeeperActivity", "Processing a STARTTIME Action");
 				// Post info to text area
 				String startStr = "";
-				
-				try { 
+
+				try {
 					startStr = tok.nextToken();
 					long startLong = Long.parseLong(startStr);
-					Date startDate = new Date( startLong );
-					addToMessageArea("Client client was started on: " + startDate );
+					Date startDate = new Date(startLong);
+					String pattern = "EEE, MMM d, ''yy - h:mm a";
+					SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+					addToMessageArea("Service was started on client on: " + sdf.format(startDate));
 				}
-				catch(Exception e) {
+				catch (Exception e) {
 					Log.e("EyeKeeperActivity", "Start time reply came back with invalid time.");
 				}
 				break;
@@ -279,26 +302,26 @@ public class EyeKeeperActivity extends MapActivity {
 	 ***********************************************************/
 	private void addToMessageArea( String message ) {
 		TextView messages = (TextView) findViewById(R.id.messageArea);
-		
+
 		if ( messages == null ) {
 			Log.i("addToMessageArea", "Messages area is null!!!");
 			return;
 		}
 		String currentMessages = (String) messages.getText().toString();
-		int startHighlite = currentMessages.length() + 1;
+		int startHighlite = 0;
 
-		currentMessages += "\n" + message;
-		
-		int endHighlite = currentMessages.length();
+		currentMessages = message + "\n" + currentMessages;
+
+		int endHighlite = message.length();
 		messages.setText(currentMessages, TextView.BufferType.SPANNABLE);
-		
+
 		Spannable lineToSpan = (Spannable) messages.getText();
 
 		lineToSpan.setSpan(new BackgroundColorSpan(0xFFFFFF00), startHighlite, endHighlite, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 		messages.setText(lineToSpan);
-		
+
 		messagesSaved = messages;
-		ScrollView scroller = ((ScrollView)findViewById(R.id.SCROLLER_ID));
+		ScrollView scroller = ((ScrollView) findViewById(R.id.SCROLLER_ID));
 		scroller.fullScroll(View.FOCUS_DOWN);
 
 	}
@@ -418,11 +441,25 @@ public class EyeKeeperActivity extends MapActivity {
 				popMessage("Sending Text: " + getString(R.string.call_me));
 				sendClientSMS(R.string.call_me);
 				return true;
+
 			case R.id.resetNumber:
 				getClientPhoneNumber();
 				return true;
+
 			case R.id.help:
 				Log.i("onOptionsItemSelected", "Help was selected");
+				return true;
+
+			case R.id.starttime:
+				Log.i("onOptionsItemSelected", "Starttime request was selected");
+				sendClientSystemSMS(Command.GET_STARTTIME.value(), null);
+				addToMessageArea("Start Time Command Sent");
+				return true;
+
+			case R.id.uptime:
+				Log.i("onOptionsItemSelected", "Uptime request was selected");
+				sendClientSystemSMS(Command.GET_UPTIME.value(), null);
+				addToMessageArea("Up Time Command Sent");
 				return true;
 
 			default:

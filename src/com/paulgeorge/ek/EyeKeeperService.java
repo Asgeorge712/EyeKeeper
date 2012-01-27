@@ -55,7 +55,8 @@ public class EyeKeeperService {
 	 ******************************************************/
 	protected EyeKeeperService(Context context) {
 		this.ctx = context;
-		Log.i("EyeKeeperService", "Service constructor is done running.");
+		AppVars.getInstance().setServerStartDate(new Date());
+		Log.i("EyeKeeperService", "Service constructor is running.");
 	}
 
 
@@ -65,6 +66,7 @@ public class EyeKeeperService {
 	 ******************************************************/
 	public static EyeKeeperService getInstance( Context ctx ) {
 		if ( instance == null ) {
+			Log.i("EyeKeeperService", "EyeKeeper Service instance is null, starting new instance...");
 			instance = new EyeKeeperService(ctx);
 		}
 		return instance;
@@ -77,13 +79,19 @@ public class EyeKeeperService {
 	 *****************************************************/
 	private void initLocationManager() {
 		// Define a listener that responds to location updates
-		if ( !listeningForLocationUpdates ) {
-			locListener = new MyLocationListener();
+		try {
+			if ( !listeningForLocationUpdates ) {
+				locListener = new MyLocationListener();
 
-			// Register the listener with the Location Manager to receive
-			// location updates
-			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locListener);
-			listeningForLocationUpdates = true;
+				// Register the listener with the Location Manager to receive
+				// location updates
+				locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locListener);
+				listeningForLocationUpdates = true;
+			}
+		}
+		catch (Exception e) {
+			Log.e("EyeKeeperService", "Exception occurred during initLocationManager: " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -112,12 +120,20 @@ public class EyeKeeperService {
 	 * @return
 	 ************************************************/
 	private String extractCommand( String msg ) {
-		if ( msg == null || msg.length() == 0 )
+		Log.i("EyeKeeperService", "extractCommand received message: " + msg);
+		if ( msg == null || msg.length() == 0 ) {
+			Log.w("EyeKeeperService", "extractCommand received a blank msg string.");
 			return null;
+		}
 		int firstSpace = msg.indexOf(" ");
-		if ( firstSpace <= 0 )
+
+		if ( firstSpace <= 0 ) {
 			return null;
-		String cmd = msg.substring(firstSpace, firstSpace + 1);
+		}
+
+		String cmd = msg.substring(firstSpace + 1, firstSpace + 2);
+		Log.d("EyeKeeperService", "substring =  " + cmd);
+
 		if ( cmd == null || cmd.length() == 0 )
 			return null;
 		return cmd;
@@ -150,7 +166,6 @@ public class EyeKeeperService {
 		}
 
 		if ( nameValues.size() > 0 ) {
-			Log.i("EyeKeeperService", "Parsing the extra tokens.");
 			params = parseNameValues(nameValues);
 		}
 
@@ -168,7 +183,9 @@ public class EyeKeeperService {
 
 		// A message will have: A preamble, A command, and Zero or more command parameters
 		String command = extractCommand(msg);
-		
+
+		Log.i("EyeKeeperService", "Command received: " + Command.lookup(Integer.parseInt(command)) );
+
 		// Look at the command and decide what to do....
 		if ( command == null || command.length() == 0 ) {
 			Log.e("EyeKeeperService", "No Command was in the text message!");
@@ -189,7 +206,6 @@ public class EyeKeeperService {
 
 		// ************************************
 		if ( params.containsKey("REPLY") ) {
-			Log.i("EyeKeeperServer", "Using params to set Server reply Phone number.");
 			vars.setServerPhone(params.get("REPLY"));
 		}
 
@@ -202,14 +218,27 @@ public class EyeKeeperService {
 		// ***********************************************
 		Command cmd = Command.lookup(command_int);
 
+		if ( cmd == null ) {
+			Log.e("EyeKeeperService", "Command received is null, doing nothing...");
+			return;
+		}
+
 		switch (cmd) {
 			case PING:
 				sendPingReplyToServer();
 				break;
-
+				
+			case SERVICE_STARTED:
+				Log.i("EyeKeeperService","Service Started.");
+				break;
+				
+			case SERVICE_STOPPED:
+				Log.i("EyeKeeperService","Service Stopped.");
+				break;
+				
 			case START_TRACKING:
 				Log.i("Service", "Received request to start tracking thread.");
-				if ( !timerRunning ) { // Start Timer
+				if ( !timerRunning ) {
 					Log.i("Service", "Timer is not running, so yay, kick off thread");
 					initLocationManager();
 					startTimer(params);
@@ -220,7 +249,7 @@ public class EyeKeeperService {
 				break;
 
 			case STOP_TRACKING:
-				if ( timerRunning ) { // Stop Timer
+				if ( timerRunning ) {
 					stopTimer("Stop Request");
 					destroyLocationManager();
 				}
@@ -260,7 +289,11 @@ public class EyeKeeperService {
     ******************************************************/
 	private void sendUptimeReplyToServer() {
 		Date currDate = new Date();
-		long diff = currDate.getTime() - AppVars.getInstance().getServerStartDate().getTime();
+		Date startDate = AppVars.getInstance().getServerStartDate();
+		long diff = 0;
+		if ( startDate != null ) {
+			diff = currDate.getTime() - startDate.getTime();
+		}
 
 		String message = EyeKeeperActivity.MESSAGE_PREAMBLE + " " + Command.UPTIME_REPLY.value() + " " + diff;
 		sendServerSMS(message);
@@ -310,9 +343,7 @@ public class EyeKeeperService {
     *
     ******************************************************/
 	private Location getCurrentLocation() {
-		LocationManager locationManager;
 		String context = Context.LOCATION_SERVICE;
-
 		locationManager = (LocationManager) ctx.getSystemService(context);
 
 		Criteria crta = new Criteria();

@@ -10,6 +10,8 @@
     <string name="quick_msg">Quick Message!</string>
     <string name="where_r_u">Where are you going?</string>
     <string name="help">Help</string>
+    <string name="starttime">Get Service Start Time</string>
+    <string name="uptime">Get Service Uptime</string>
     <string name="stop_code">stop_tracking</string>
     <string name="start_code">start_tracking</string>
     <string name="service_name">EyeKeeper Service</string>

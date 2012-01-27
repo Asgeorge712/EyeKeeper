@@ -10,7 +10,10 @@ enum Command {
 	PING_REPLY(6), LOCATION(7), STOP_REC_ACTION(8), UPTIME_REPLY(9), STARTTIME_REPLY(10),
 
 	// Errors
-	ERROR_REPLY(99);
+	ERROR_REPLY(99),
+	
+	//Messages
+	SERVICE_STARTED(100), SERVICE_STOPPED(101);
 
 	private int _value;
 
